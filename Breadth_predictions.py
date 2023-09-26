@@ -39,7 +39,7 @@ def create_parser():
     # ---data arguments
     parser.add_argument('--data_dir', type=str, default='./data',
                         help='location of labelled datasets for model training')
-    parser.add_argument('--target', type=str, default='all',
+    parser.add_argument('--target', type=str, default='ACE2',
                         help='name of target to run predictions for')
     parser.add_argument('--start_voc', type=str, default='BA.2',
                         help='initial VOC used to generate lineages')
