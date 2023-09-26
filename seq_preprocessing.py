@@ -21,6 +21,8 @@ To run the script you have to:
     - Define a list object with the sequence origins e.g. ['ACE2', 'naive']
     - Define the original RBD sequence for distance calculations
 
+In the grand scope of things, this script is likely unnecessary to understand DML
+However, we're keeping it in the repo for people to understand how we preprocessed the data beforehand
 """
 
 import os
@@ -29,11 +31,11 @@ import pandas as pd
 from helpers import levenshtein_RBD
 
 # set directories if working locally. File path should have a '/' at the end!!!!
-WORK_DIR = ""
+WORK_DIR = os.getcwd()
 # SAVE_DIR is the location for all output.
-SAVE_DIR = WORK_DIR
+SAVE_DIR = f"{WORK_DIR}/data"
 # RAW_SEQ_DIR is the location of the raw sequences you want to process
-RAW_SEQ_DIR = ""
+RAW_SEQ_DIR = f"{WORK_DIR}/raw_data"
 os.chdir(WORK_DIR)
 
 rand_state = 42
@@ -41,7 +43,6 @@ rand_state = 42
 """
 Create required functions
 """
-
 
 def make_full_seq(df, missing_seq, target, lib_name):
     """
@@ -161,7 +162,6 @@ def create_labeled_df(bind_df, escape_df, target, lib_name, SAVE_DIR):
 Main function
 """
 
-
 def main(RAW_SEQ_DIR, SAVE_DIR, lib_list, targets_list, labels_list, wt_seq, common_naming, threshold):
     """
 
@@ -214,8 +214,6 @@ def main(RAW_SEQ_DIR, SAVE_DIR, lib_list, targets_list, labels_list, wt_seq, com
             # Make final labelled dataframe
             labeled_df = create_labeled_df(bind_df, escape_df, target, lib, LIB_SAVE_DIR)
 
-
-# %%
 
 # The following are some default options for running the preprocessing
 targets_list = ['ACE2', 'ZCB11', 'S2X259']

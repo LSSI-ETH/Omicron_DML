@@ -450,7 +450,7 @@ def main_generator(args):
         np.random.seed(rand_seed)
         print(f'Generating sequences for set {set_n}')
         n_round = rounds
-        seq_df = generator_omi(n_round, seq_n, model_list = ace2_models, model_type = args.base_model,
+        seq_df = generator_omi(n_round, seq_n, ace2_models, args.base_model,
                                wt_seq, voc_seq, voc,
                                embedding=args.embedding, batch_size=args.batch_size, ace2_bind=ace2_bind,
                                aa_probs=aa_mat, pos_probs=pos_mat)
@@ -464,7 +464,7 @@ def main_generator(args):
         np.random.seed(rand_seed)
         print(f'Generating sequences for set {set_n}')
         n_round = rounds
-        seq_df = generator_omi(n_round, seq_n, model_list = ace2_models, model_type = args.base_model,
+        seq_df = generator_omi(n_round, seq_n, ace2_models, args.base_model,
                                wt_seq, voc_seq, voc,
                                embedding=args.embedding, batch_size=args.batch_size, ace2_bind=ace2_bind)
 

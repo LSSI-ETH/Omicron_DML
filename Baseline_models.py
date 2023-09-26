@@ -10,7 +10,7 @@ Before starting you need to change:
     WORK_DIR should contain helpers.py
 
 To run the script you have to:
-    - Define a list object with the library numbers e.g. ['lib1', 'lib2', ...]
+    - Define a list object with the library numbers e.g. ['Lib1', 'Lib2', ...]
     - Define a list object with the model names as used fo the input 'model_type' of the evaluate_models() function.
         E.g. ['SGD', 'RF', 'RBF'].
     - Decide about how many rounds of ext CV you want.
@@ -23,16 +23,13 @@ hyperparameters). And adding the model type to the correct block of the evaluate
 import os
 
 # set directories if working locally. File path should have a '/' at the end!!!!
-# WORK_DIR should contain helpers_v3.py
 WORK_DIR = os.getcwd()
-# WORK_DIR = "/Users/beichengao/Documents/Beichen/Projects/RBD_Omi/Analysis/ACE2_models/15122022_BE_models/"
-# SAVE_DIR is the location for all output
-SAVE_DIR = WORK_DIR
 # LIB_DIR contains the labeled libraries
-LIB_DIR = "Data/"
-# LIB_DIR = "/Users/beichengao/Documents/Beichen/Projects/RBD_Omi/Analysis/ACE2_models/15122022_BE_models/Data/"
-os.chdir(WORK_DIR)
-print(os.getcwd())
+LIB_DIR = f"{WORK_DIR}/data/"
+# SAVE_DIR is the location for all output
+SAVE_DIR = f"{WORK_DIR}/baseline_models/"
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
 
 rand_state = 42
 
@@ -391,7 +388,7 @@ def make_scores_plot(path_to_parent_dir, model_list, lib_num):
         path_to_parent_dir: Path to the parent directory in which the output folder structure is established.
         neurons_list: List of neurons in the dense layers. Needed, becasue we have one output folder per this metric
         e.g. 'neuron_32'
-        lib_num: Number of library e.g. 'lib1'.
+        lib_num: Number of library e.g. 'Lib1'.
     """
     df = pd.DataFrame()
     for model in model_list:
@@ -621,28 +618,20 @@ def loop_score_models(
     # Save old workdir
     old_dir = os.getcwd()
 
-    # Set random state
-    # rand_state = 42
-
-    # model_list should be an input
-    # model_list = ['SGD', 'RF', 'RBF']
-
-    # lib_list should be an input
-    # lib_list = ['lib1', 'lib2', 'lib3']
     for tar in target_list:
         for lib in lib_list:
-            seq_df = pd.read_csv(f"{lib_dir}/{lib}_labeled.csv")
+            seq_df = pd.read_csv(f"{lib_dir}/{tar}_{lib}_labeled.csv")
             # Calculate distances
             seq_df = calculate_distance(seq_df, tar, wt_seq, max_dist=16)
             for model in model_list:
                 # Create the output folder structure needed to run the code
                 import pathlib
 
-                new_dir = f"{save_dir}/{lib}/{model}/"
+                new_dir = f"{save_dir}/{tar}/{lib}/{model}/"
                 pathlib.Path(new_dir).mkdir(parents=True, exist_ok=True)
 
                 # Set new workdir for saving
-                print("Saving output into: " + str(new_dir))
+                print(f"Saving output into: {new_dir}")
                 os.chdir(new_dir)
 
                 # Make objects to collect counts and scores
@@ -697,11 +686,9 @@ def loop_score_models(
             make_scores_plot(save_dir, model_list, lib)
 
 
-# %%
-
 os.chdir(WORK_DIR)
 target_list = ["ACE2"]
-lib_list = ["lib1", "lib2"]
+lib_list = ["Lib1", "Lib2"]
 model_list = ["SGD", "RF", "RBF", "NB", "Log_reg"]
 wt_seq = (
     "NITNLCPFDEVFNATRFASVYAWNRKRISNCVADYSVLYNLAPFFTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQT"
