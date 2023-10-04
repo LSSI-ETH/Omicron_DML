@@ -80,7 +80,7 @@ def create_parser():
     parser.add_argument("--dense_dim", type=int, default=32, help='Number of neuron in dense layer')
     parser.add_argument('--dense_dropout', type=float, default=0.2,
                         help='dropout for dense layer')
-    parser.add_argument('--dense_layers', type=int, default=0,
+    parser.add_argument('--dense_layers', type=int, default=1,
                         help='number of additional dense layers in MLP')
 
     return parser
@@ -241,7 +241,7 @@ def main(args):
         print(f'Padding: {str(args.padding)}')
         print(f'Kernel Size: {str(args.kernel_size)}')
         # create run_name and model_name variables for all future naming
-        run_name = f'{args.target}_{args.library}_{seed_entry}_{args.base_model}_{args.top_model}_thres{args.count_threshold}_min{args.minority_ratio}_{timestr}'
+        run_name = f'{args.target}_{args.library}_{seed_entry}_{args.base_model}_thres{args.count_threshold}_min{args.minority_ratio}_{timestr}' ##TODO: delete top_model
 
         # ======================= Load Datasets =======================
         data = pd.read_csv(
@@ -260,7 +260,7 @@ def main(args):
         train_x = encode_data(train.aa, encoding=args.embedding)
         test_x = encode_data(test.aa, encoding=args.embedding)
         val_x = encode_data(val.aa, encoding=args.embedding)
-        if args.base_model == 'dense':
+        if args.base_model == 'mlp': ##TODO: change to mlp
             # flatten encodings
             train_x = train_x.reshape(train_x.shape[0], -1)
             test_x = test_x.reshape(test_x.shape[0], -1)
@@ -311,7 +311,7 @@ def main(args):
         loss_fn = keras.losses.BinaryCrossentropy()
         opt = keras.optimizers.Adam(learning_rate=args.learn_rate)
         model_metrics = [keras.metrics.BinaryAccuracy(),
-                         tfa.metrics.F1Score(num_classes=1, average='macro', threshold=0.5),
+                        tfa.metrics.F1Score(num_classes=1, average='macro', threshold=0.5),
                          keras.metrics.AUC(curve='ROC', name='roc_auc'),
                          keras.metrics.AUC(curve='PR', name='pr_auc'),
                          binary_mcc]
@@ -339,7 +339,7 @@ def main(args):
                                  regularizer_term=args.regularizer_term)
         elif args.base_model == 'mlp':
             model = MLP(dense_dim=args.dense_dim, dense_dropout=args.dense_dropout, dense_layers=args.dense_layers)
-
+        
         model.compile(loss=loss_fn, optimizer=opt, metrics=model_metrics)
 
         # ======================= Train model  =======================
@@ -410,17 +410,18 @@ def main(args):
         metric_df.rename(columns={0: timestr})
         metric_df.to_csv(f'{METRICS_DIR}/{run_name}_metrics.csv')
 
-        # ======================= Test on known VOC  =======================
-        # create results folder
-        VOC_DIR = f'{WORK_DIR}/voc/{args.target}'
-        if not os.path.exists(VOC_DIR):
-            os.makedirs(VOC_DIR)
-        # load test variants
-        test_var = pd.read_csv(f'{DATA_DIR}/VOC_Spike_all.csv', index_col=0)
-        var_x = encode_onehot_padded(test_var.sequence)
-        test_predictions = model.predict(var_x)
-        test_var[run_name] = test_predictions
-        test_var.to_csv(f'{VOC_DIR}/{run_name}_test_variants.csv')
+        # # ======================= Test on known VOC  =======================
+        # # create results folder
+        # VOC_DIR = f'{WORK_DIR}/voc/{args.target}'
+        # if not os.path.exists(VOC_DIR):
+        #     os.makedirs(VOC_DIR)
+        # # load test variants
+        # test_var = pd.read_csv(f'{DATA_DIR}/VOC_Spike_all.csv', index_col=0)
+        ##TODO: flatten var_x for mlp
+        # var_x = encode_onehot_padded(test_var.sequence)
+        # test_predictions = model.predict(var_x)
+        # test_var[run_name] = test_predictions
+        # test_var.to_csv(f'{VOC_DIR}/{run_name}_test_variants.csv')
         # ======================= Save then Delete Model from Memory  =======================
         # check if models/ directory exists
         MODEL_DIR = f'{WORK_DIR}/models/{args.target}'
