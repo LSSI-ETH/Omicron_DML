@@ -11,7 +11,7 @@ Before starting you need to change:
 
 To run the script you have to:
     - Define a list object with the library numbers e.g. ['Lib1', 'Lib2', ...]
-    - Define a list object with the model names as used fo the input 'model_type' of the evaluate_models() function.
+    - Define a list object with the model names as used for the input 'model_type' of the evaluate_models() function.
         E.g. ['SGD', 'RF', 'RBF'].
     - Decide about how many rounds of ext CV you want.
 
@@ -20,14 +20,15 @@ Adding the evaluation to the evaluate_models() function (copy paste code block a
 hyperparameters). And adding the model type to the correct block of the evaluate_scores() function.
 """
 
+
 import os
 
 # set directories if working locally. File path should have a '/' at the end!!!!
 WORK_DIR = os.getcwd()
 # LIB_DIR contains the labeled libraries
-LIB_DIR = f"{WORK_DIR}/data/"
+LIB_DIR = f"{WORK_DIR}/data"
 # SAVE_DIR is the location for all output
-SAVE_DIR = f"{WORK_DIR}/baseline_models/"
+SAVE_DIR = f"{WORK_DIR}/baseline_models"
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
@@ -108,16 +109,16 @@ def evaluate_scores(df, model, model_type):
     y_true = df.Label
     # Calculate scores
     acc = accuracy_score(y_true, y_pred)
-    # acc = acc.astype(np.float)
+    # acc = acc.astype(float)
     f1 = f1_score(y_true, y_pred)
-    # f1 = f1.astype(np.float)
+    # f1 = f1.astype(float)
     mcc = matthews_corrcoef(y_true, y_pred)
-    # mcc = mcc.astype(np.float)
+    # mcc = mcc.astype(float)
     fpr, tpr, thresholds = roc_curve(y_true, y_pred_prob)
     model_auc = auc(fpr, tpr)
-    # model_auc = model_auc.astype(np.float)
-    fpr = fpr.astype(np.float)
-    tpr = tpr.astype(np.float)
+    # model_auc = model_auc.astype(float)
+    fpr = fpr.astype(np.float64)
+    tpr = tpr.astype(np.float64)
     return [acc, f1, mcc, model_auc], fpr, tpr
 
 
@@ -183,7 +184,7 @@ def make_dist_df(df):
     """
     c = df.Distance.value_counts()
     c = pd.DataFrame(c).reset_index()
-    c = c.rename(columns={"index": "Distance", "Distance": "Counts"})
+    c = c.rename(columns={"Distance": "Distance", "count": "Counts"})
     c.sort_values("Distance", inplace=True)
     return c
 
@@ -197,20 +198,21 @@ def balance_edit_distance(df, distances, name, rand_state):
         a = pos.loc[pos["Distance"] == i]
         b = neg.loc[neg["Distance"] == i]
         if len(a) <= len(b):
-            balanced_list = balanced_list.append(a)
-            balanced_list = balanced_list.append(
-                b.sample(len(a), random_state=rand_state)
+            balanced_list = pd.concat([balanced_list, a],ignore_index=True)
+            balanced_list = pd.concat([balanced_list,
+                b.sample(len(a), random_state=rand_state)],ignore_index=True
             )
         if len(b) < len(a):
-            balanced_list = balanced_list.append(
-                a.sample(len(b), random_state=rand_state)
+            balanced_list = pd.concat([balanced_list,
+                a.sample(len(b), random_state=rand_state)],ignore_index=True
             )
-            balanced_list = balanced_list.append(b)
+            balanced_list = pd.concat([balanced_list,b],ignore_index=True)
+
 
     minimum = int(min(balanced_list.Distance))
     maximum = int(max(balanced_list.Distance))
     graph_labels = list(map(str, range(minimum, (maximum + 1))))
-    graph_labels_df = pd.DataFrame(data=graph_labels, columns={"Distance"})
+    graph_labels_df = pd.DataFrame(data=graph_labels, columns=["Distance"])
     graph_labels_df["Distance"] = graph_labels_df["Distance"].astype(
         int
     )  # Need to reset type to merge
@@ -543,7 +545,6 @@ def evaluate_models(x_train, y_train, test_df_new, model_type, rand_state, round
             "sgdclassifier__loss": [
                 "hinge",
                 "log_loss",
-                "log",
                 "modified_huber",
                 "squared_hinge",
                 "perceptron",
