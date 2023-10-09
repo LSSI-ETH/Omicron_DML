@@ -621,7 +621,7 @@ def loop_score_models(
 
     for tar in target_list:
         for lib in lib_list:
-            seq_df = pd.read_csv(f"{lib_dir}/{tar}_{lib}_labeled.csv")
+            seq_df = pd.read_csv(f"{lib_dir}/{lib}/{tar}_{lib}_labeled.csv")
             # Calculate distances
             seq_df = calculate_distance(seq_df, tar, wt_seq, max_dist=16)
             for model in model_list:

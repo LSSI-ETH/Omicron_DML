@@ -28,7 +28,7 @@ def create_parser():
     parser = argparse.ArgumentParser(description="Training of deep learning models for omicron RBD", fromfile_prefix_chars='@')
 
     # ---data arguments
-    parser.add_argument('--data_dir', type=str, default='./data',
+    parser.add_argument('--data_dir', type=str, default='/data',
                         help='location of labelled datasets for model training')
     parser.add_argument('--target', type=str, default='ACE2',
                         help='location of labelled datasets for model training')
@@ -208,7 +208,7 @@ def encode_data(aa, encoding):
 def main(args):
 
     WORK_DIR = os.getcwd()
-    DATA_DIR = f"{WORK_DIR}/{args.data_dir}"
+    DATA_DIR = f"{WORK_DIR}{args.data_dir}"
     META_DIR = f'{WORK_DIR}/meta/{args.target}'
     if not os.path.exists(META_DIR):
         os.makedirs(META_DIR)
@@ -241,7 +241,7 @@ def main(args):
         print(f'Padding: {str(args.padding)}')
         print(f'Kernel Size: {str(args.kernel_size)}')
         # create run_name and model_name variables for all future naming
-        run_name = f'{args.target}_{args.library}_{seed_entry}_{args.base_model}_{args.top_model}_thres{args.count_threshold}_min{args.minority_ratio}_{timestr}'
+        run_name = f'{args.target}_{args.library}_{seed_entry}_{args.base_model}_thres{args.count_threshold}_min{args.minority_ratio}_{timestr}'
 
         # ======================= Load Datasets =======================
         data = pd.read_csv(
@@ -379,7 +379,7 @@ def main(args):
                            args.dense_dropout, args.dense_layers, args.regularizer_term, args.base_model,
                            args.residual_blocks, args.dilation_rate]
 
-        run_args_names = ['run_name', 'target', 'library', 'count_threshold', 'seed', 'test_size',
+        run_args_names = ['run_name', 'target', 'library', 'count_threshold', 'test_seed', 'test_size',
                           'val_size', 'rejection_sampling', 'minority_ratio', 'early_stop',
                           'batch_size', 'epoch', 'learn_rate', 'kernel_size', 'filter_num',
                           'stride', 'padding', 'pool_size', 'pool_stride', 'dense_dim',

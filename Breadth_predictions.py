@@ -440,7 +440,7 @@ def main(args):
     METRICS_DIR = f"{WORK_DIR}/voc_predictions/ratio{args.minority_ratio}/{args.n_top_models}/{args.rank_metric}/"
     MODEL_DIR = f"{WORK_DIR}/models"
     DATA_DIR = f"{WORK_DIR}/generated_seqs/ace2_{args.ace2_bind}/{args.year}/{args.subsample_size}"
-    RUN_NAME = f"ace2_{args.ace2_bind}/{args.rank_metric}/{args.year}/{args.start_voc}/{args.subsample_size}/{args.type_threshold}/{args.prediction_method}"
+    RUN_NAME = f"ace2_{args.ace2_bind}/{args.rank_metric}/{args.year}/{args.start_voc}/{args.subsample_size}/{args.threshold}/{args.prediction_method}"
     SAVE_DIR = f"{WORK_DIR}/generated_predictions/{RUN_NAME}"
     FULL_PREDS_SAVE_DIR = f"{WORK_DIR}/full_preds/{RUN_NAME}"
     if not os.path.exists(SAVE_DIR):
