@@ -209,9 +209,6 @@ def main(args):
 
     WORK_DIR = os.getcwd()
     DATA_DIR = f"{WORK_DIR}/{args.data_dir}"
-    META_DIR = f'{WORK_DIR}/meta/{args.target}'
-    if not os.path.exists(META_DIR):
-        os.makedirs(META_DIR)
 
     # set random_seeds
     if args.seed == 0:
@@ -241,7 +238,7 @@ def main(args):
         print(f'Padding: {str(args.padding)}')
         print(f'Kernel Size: {str(args.kernel_size)}')
         # create run_name and model_name variables for all future naming
-        run_name = f'{args.target}_{args.library}_{seed_entry}_{args.base_model}_thres{args.count_threshold}_min{args.minority_ratio}_{timestr}' ##TODO: delete top_model
+        run_name = f'{args.target}_{args.library}_{seed_entry}_{args.base_model}_thres{args.count_threshold}_min{args.minority_ratio}_{timestr}'
 
         # ======================= Load Datasets =======================
         data = pd.read_csv(
@@ -260,7 +257,7 @@ def main(args):
         train_x = encode_data(train.aa, encoding=args.embedding)
         test_x = encode_data(test.aa, encoding=args.embedding)
         val_x = encode_data(val.aa, encoding=args.embedding)
-        if args.base_model == 'mlp': ##TODO: change to mlp
+        if args.base_model == 'mlp':
             # flatten encodings
             train_x = train_x.reshape(train_x.shape[0], -1)
             test_x = test_x.reshape(test_x.shape[0], -1)
@@ -411,17 +408,19 @@ def main(args):
         metric_df.to_csv(f'{METRICS_DIR}/{run_name}_metrics.csv')
 
         # # ======================= Test on known VOC  =======================
-        # # create results folder
-        # VOC_DIR = f'{WORK_DIR}/voc/{args.target}'
-        # if not os.path.exists(VOC_DIR):
-        #     os.makedirs(VOC_DIR)
-        # # load test variants
-        # test_var = pd.read_csv(f'{DATA_DIR}/VOC_Spike_all.csv', index_col=0)
-        ##TODO: flatten var_x for mlp
-        # var_x = encode_onehot_padded(test_var.sequence)
-        # test_predictions = model.predict(var_x)
-        # test_var[run_name] = test_predictions
-        # test_var.to_csv(f'{VOC_DIR}/{run_name}_test_variants.csv')
+        # create results folder
+        VOC_DIR = f'{WORK_DIR}/voc/{args.target}'
+        if not os.path.exists(VOC_DIR):
+            os.makedirs(VOC_DIR)
+        # load test variants
+        test_var = pd.read_csv(f'{DATA_DIR}/VOC_Spike_all.csv', index_col=0)
+        # encode depending on desired model
+        var_x = encode_data(test_var.sequence, args.embedding)
+        if args.base_model == 'mlp':
+            var_x = var_x.reshape(var_x.shape[0], -1)
+        test_predictions = model.predict(var_x)
+        test_var[run_name] = test_predictions
+        test_var.to_csv(f'{VOC_DIR}/{run_name}_test_variants.csv')
         # ======================= Save then Delete Model from Memory  =======================
         # check if models/ directory exists
         MODEL_DIR = f'{WORK_DIR}/models/{args.target}'
