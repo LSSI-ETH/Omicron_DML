@@ -209,9 +209,6 @@ def main(args):
 
     WORK_DIR = os.getcwd()
     DATA_DIR = f"{WORK_DIR}/{args.data_dir}"
-    META_DIR = f'{WORK_DIR}/meta/{args.target}'
-    if not os.path.exists(META_DIR):
-        os.makedirs(META_DIR)
 
     # set random_seeds
     if args.seed == 0:
