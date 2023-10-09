@@ -53,8 +53,8 @@ def create_parser():
     parser.add_argument('--test_variants_colname', type=str, default='sequence',
                         help='name of column containing sequences of variants to test predictions on (VoC or synthetic)')
     # ---DL arguments
-    parser.add_argument("--base_model", type=str, default='cnn1d',
-                        help='Type of deep learning model to use. Options: cnn1d, mlp')
+    parser.add_argument("--base_model", type=str, default='cnn',
+                        help='Type of deep learning model to use. Options: cnn, mlp')
     parser.add_argument('--embedding', type=str, default='onehot',
                         help='embedding to use for sequences, options: onehot (esm removed)')
     parser.add_argument('--batch_size', type=int, default=32,
@@ -327,7 +327,7 @@ def main(args):
             callbacks = [tensorboard_callback]
 
         # ======================= Create model  =======================
-        if args.base_model == 'cnn1d':
+        if args.base_model == 'cnn':
             model = CNN_model_1D(stride=args.stride, filter_num=args.filter_num, padding=args.padding,
                                  kernel_size=args.kernel_size, dense_dim=args.dense_dim,
                                  dense_dropout=args.dense_dropout,
