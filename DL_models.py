@@ -53,8 +53,8 @@ def create_parser():
     parser.add_argument('--test_variants_colname', type=str, default='sequence',
                         help='name of column containing sequences of variants to test predictions on (VoC or synthetic)')
     # ---DL arguments
-    parser.add_argument("--base_model", type=str, default='cnn1d',
-                        help='Type of deep learning model to use. Options: cnn1d, mlp')
+    parser.add_argument("--base_model", type=str, default='cnn',
+                        help='Type of deep learning model to use. Options: cnn, mlp')
     parser.add_argument('--embedding', type=str, default='onehot',
                         help='embedding to use for sequences, options: onehot (esm removed)')
     parser.add_argument('--batch_size', type=int, default=32,
@@ -80,7 +80,7 @@ def create_parser():
     parser.add_argument("--dense_dim", type=int, default=32, help='Number of neuron in dense layer')
     parser.add_argument('--dense_dropout', type=float, default=0.2,
                         help='dropout for dense layer')
-    parser.add_argument('--dense_layers', type=int, default=0,
+    parser.add_argument('--dense_layers', type=int, default=1,
                         help='number of additional dense layers in MLP')
 
     return parser
@@ -213,6 +213,8 @@ def main(args):
     if not os.path.exists(META_DIR):
         os.makedirs(META_DIR)
 
+
+
     # set random_seeds
     if args.seed == 0:
         seed_list = [1, 2, 3]
@@ -260,7 +262,7 @@ def main(args):
         train_x = encode_data(train.aa, encoding=args.embedding)
         test_x = encode_data(test.aa, encoding=args.embedding)
         val_x = encode_data(val.aa, encoding=args.embedding)
-        if args.base_model == 'dense':
+        if args.base_model == 'mlp':
             # flatten encodings
             train_x = train_x.reshape(train_x.shape[0], -1)
             test_x = test_x.reshape(test_x.shape[0], -1)
@@ -311,7 +313,7 @@ def main(args):
         loss_fn = keras.losses.BinaryCrossentropy()
         opt = keras.optimizers.Adam(learning_rate=args.learn_rate)
         model_metrics = [keras.metrics.BinaryAccuracy(),
-                         tfa.metrics.F1Score(num_classes=1, average='macro', threshold=0.5),
+                        tfa.metrics.F1Score(num_classes=1, average='macro', threshold=0.5),
                          keras.metrics.AUC(curve='ROC', name='roc_auc'),
                          keras.metrics.AUC(curve='PR', name='pr_auc'),
                          binary_mcc]
@@ -330,7 +332,7 @@ def main(args):
             callbacks = [tensorboard_callback]
 
         # ======================= Create model  =======================
-        if args.base_model == 'cnn1d':
+        if args.base_model == 'cnn':
             model = CNN_model_1D(stride=args.stride, filter_num=args.filter_num, padding=args.padding,
                                  kernel_size=args.kernel_size, dense_dim=args.dense_dim,
                                  dense_dropout=args.dense_dropout,
@@ -339,7 +341,7 @@ def main(args):
                                  regularizer_term=args.regularizer_term)
         elif args.base_model == 'mlp':
             model = MLP(dense_dim=args.dense_dim, dense_dropout=args.dense_dropout, dense_layers=args.dense_layers)
-
+        
         model.compile(loss=loss_fn, optimizer=opt, metrics=model_metrics)
 
         # ======================= Train model  =======================
@@ -410,14 +412,17 @@ def main(args):
         metric_df.rename(columns={0: timestr})
         metric_df.to_csv(f'{METRICS_DIR}/{run_name}_metrics.csv')
 
-        # ======================= Test on known VOC  =======================
+        # # ======================= Test on known VOC  =======================
         # create results folder
         VOC_DIR = f'{WORK_DIR}/voc/{args.target}'
         if not os.path.exists(VOC_DIR):
             os.makedirs(VOC_DIR)
         # load test variants
         test_var = pd.read_csv(f'{DATA_DIR}/VOC_Spike_all.csv', index_col=0)
-        var_x = encode_onehot_padded(test_var.sequence)
+        # encode depending on desired model
+        var_x = encode_data(test_var.sequence, args.embedding)
+        if args.base_model == 'mlp':
+            var_x = var_x.reshape(var_x.shape[0], -1)
         test_predictions = model.predict(var_x)
         test_var[run_name] = test_predictions
         test_var.to_csv(f'{VOC_DIR}/{run_name}_test_variants.csv')
