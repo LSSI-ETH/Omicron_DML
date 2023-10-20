@@ -35,10 +35,9 @@ for target in targets:
 
 info_df = info_df.transpose().reset_index()
 info_df.rename(columns={'index': 'model_name'}, inplace=True)
-
 # turn all cols except dataset into numeric
 num_cols = info_df.columns.drop(
-    ['target', 'model_name', 'run_name', 'library', 'rejection_sampling', 'padding', 'base_model', 'top_model', 'embedding'])
+    ['target', 'model_name', 'run_name', 'library', 'rejection_sampling', 'padding', 'base_model'])
 info_df[num_cols] = info_df[num_cols].apply(pd.to_numeric, errors='coerce')
 
 # Add a column for "model_depth" that adds dense_layers or residual_blocks depending on model
@@ -65,12 +64,13 @@ if not os.path.exists(FIG_DIR):
     os.makedirs(FIG_DIR)
 
 # Set the main parameters to filter by/plot
+##TODO: when filter_value for test_seed gives test_mcc==0, the code can't proceed.
 plot_score = 'test_mcc'
 col_var = 'library'
 row_var = 'dense_dim'
 hue_var = 'model_depth'
 filter_var = 'test_seed'
-filter_value = 2
+filter_value = 1
 base_model = 'cnn1d'
 
 # Plot facetgrid of model performance given parameters
