@@ -71,7 +71,7 @@ row_var = 'dense_dim'
 hue_var = 'model_depth'
 filter_var = 'test_seed'
 filter_value = 1
-base_model = 'cnn1d'
+base_model = 'cnn'
 
 # Plot facetgrid of model performance given parameters
 if filter_var is not None:
@@ -81,13 +81,9 @@ if filter_var is not None:
 else:
     a = sns.catplot(info_df, x='target', y=plot_score, col=col_var,
                     row=row_var, hue=hue_var, kind='box')
-# a = sns.catplot(info_df, x='target', y=plot_score, col=col_var, hue='epoch', kind='box')
-#
 a.set(ylim=(0.5, 1.0))
-# a.set_ylim(xmin=0.5, xmax=1.0)
 a.set_xticklabels(rotation=90)
 plt.tight_layout()
-# plt.savefig(f'{FIG_DIR}/{base_model}_{plot_score}_all.png', dpi=300, format='png')
 plt.savefig(f'{FIG_DIR}/{plot_score}_by_{col_var}_{row_var}_{hue_var}_{filter_var}{filter_value}.png', dpi=300, format='png')
 plt.show()
 plt.close()
@@ -224,12 +220,12 @@ DATA_DIR = f"{WORK_DIR}/data" # these may have changed depending on the variable
 PRED_DIR = f"{WORK_DIR}/voc"
 targets = ['ACE2']
 libs_list = ['Lib1', 'Lib2']
-base_models = ['cnn1d']
+base_models = ['cnn']
 model_depths = [2, None]
 lr = [0.0001]
 test_seeds = [1]
 rank_metrics = ['test_mcc', 'test_recall', 'test_precision']
-n_top_models = [3, 5]
+n_top_models = [3]
 voc_plot_class = 'VariantName'
 main_voc = 'Omicron'
 minority_ratio = 0.25
