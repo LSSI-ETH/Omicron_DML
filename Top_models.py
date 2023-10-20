@@ -64,7 +64,6 @@ if not os.path.exists(FIG_DIR):
     os.makedirs(FIG_DIR)
 
 # Set the main parameters to filter by/plot
-##TODO: when filter_value for test_seed gives test_mcc==0, the code can't proceed.
 plot_score = 'test_mcc'
 col_var = 'library'
 row_var = 'dense_dim'
@@ -99,7 +98,6 @@ a = sns.catplot(info_df_melt, x='target', y='score', col=col_var, row='epoch',
                 hue='metric', kind='box')
 
 a.set(ylim=(0.5, 1.0))
-# a.set_ylim(xmin=0.5, xmax=1.0)
 a.set_xticklabels(rotation=90)
 plt.tight_layout()
 plt.savefig(f'{FIG_DIR}/{base_model}_{plot_score}_all.png', dpi=300, format='png')

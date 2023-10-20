@@ -50,14 +50,22 @@ def create_parser():
                         help='flag for whether if mutation heatmaps should be plotted for generated seqs')
 
     # DL Arguments
+    parser.add_argument('--test_seed', type=int, default=1,
+                        help='seed of models to take from')
+    parser.add_argument("--model_depth", type=int, default=2,
+                        help='depth of model used')
     parser.add_argument('--embedding', type=str, default='onehot',
                         help='embedding to use for sequences, options: onehot')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size during training')
-    parser.add_argument("--base_model", type=str, default='cnn1d',
-                        help='Type of model to use. Options: mlp, cnn1d')
+    parser.add_argument("--base_model", type=str, default='cnn',
+                        help='Type of model to use. Options: mlp, cnn')
     parser.add_argument('--rank_metric', type=str, default='mcc',
                         help='metric to use to get the top models, options: mcc, recall, precision')
+    parser.add_argument("--minority_ratio", type=float, default=0.25,
+                        help='minority ratio selected for best outcomes from HP optimization')
+    parser.add_argument("--n_top_models", type=int, default=3,
+                        help='number of top models to use for predictions')
 
     return parser
 
@@ -349,8 +357,7 @@ def load_ace2_models(args, MODEL_DIR, SCORE_DIR):
         init_x = init_x.reshape(init_x.shape[0], -1)
 
     # take metrics from top models selected from Top_models.py
-    ##TODO: need to unify this file path with the metrics saved in Top_models.py
-    top_models_df = pd.read_csv(f"{SCORE_DIR}/ACE2_{args.base_model}_test_{args.rank_metric}_top_model_metrics.csv",
+    top_models_df = pd.read_csv(f"{SCORE_DIR}/ACE2_{args.base_model}_seed{args.test_seed}_depth{args.model_depth}_{args.rank_metric}_top_model_metrics.csv",
                                 index_col=0)
     top_models_df.reset_index(inplace=True)
     model_metrics = top_models_df.to_dict()
@@ -359,7 +366,7 @@ def load_ace2_models(args, MODEL_DIR, SCORE_DIR):
     model_list = []
     for i in range(len(top_models_df)):
         model_name = model_metrics['model_name'][i]
-        if args.base_model == 'cnn1d':
+        if args.base_model == 'cnn':
             model = CNN_model_1D(stride=model_metrics['stride'][i],
                                  filter_num=model_metrics['filter_num'][i],
                                  padding=model_metrics['padding'][i],
@@ -392,7 +399,7 @@ def main_generator(args):
     """
     WORK_DIR = os.getcwd()
     DATA_DIR = f"{WORK_DIR}/data"
-    SCORE_DIR = f"{WORK_DIR}/voc_predictions"
+    SCORE_DIR = f"{WORK_DIR}/voc_predictions/ratio{args.minority_ratio}/{args.n_models}/{args.rank_metric}"
     MODEL_DIR = f"{WORK_DIR}/models"
     SAVE_DIR = f"{WORK_DIR}/generated_seqs"
     if not os.path.exists(SAVE_DIR):

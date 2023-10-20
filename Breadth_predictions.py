@@ -74,8 +74,8 @@ def create_parser():
                         help='embedding to use for sequences, options: onehot')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size during training')
-    parser.add_argument("--base_model", type=str, default='cnn1d',
-                        help='Type of model to use. Options: mlp, cnn1d')
+    parser.add_argument("--base_model", type=str, default='cnn',
+                        help='Type of model to use. Options: mlp, cnn')
     parser.add_argument("--prediction_method", type=str, default='majority_voting',
                         help='Method used to predict final labels. Options: majority_voting, average')
     return parser
@@ -231,7 +231,7 @@ def initiate_models(target, model_type, rank_metric, test_seed, model_depth, MET
         model_metrics = models_df.to_dict()
         for i in range(len(models_df)):
             model_name = model_metrics['model_name'][i]
-            if model_type == 'cnn1d':
+            if model_type == 'cnn':
                 model = CNN_model_1D(stride=model_metrics['stride'][i],
                                      filter_num=model_metrics['filter_num'][i],
                                      padding=model_metrics['padding'][i],
