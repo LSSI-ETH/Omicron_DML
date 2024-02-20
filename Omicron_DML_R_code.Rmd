@@ -1,0 +1,181 @@
+---
+title: "Omicron_DML_R_code_JH"
+author: "Jiami Han"
+date: "2023-10-05"
+output: html_document
+---
+Publication: Deep learning-guided selection of antibody therapies with enhanced resistance to current and prospective SARS-CoV-2 Omicron variants
+Figure 4a, Figure 4f
+This RMD file gives walkthrough in the work flow of generating lineage plot for mutations that are not in the existing main variants, and calculate escape score and plot it highlighting the mutations in BA.2.86.
+
+
+## Library packages and functions
+Make sure the working directory has RBD_tree_functions.R in it.
+```{r}
+library(dplyr)
+library(ggtree)
+library(ggplot2)
+library(stringr)
+library(Biostrings)
+library(ggnewscale)
+library(purrr)
+library(ggrepel)
+library(pheatmap)
+source('RBD_tree_functions.R')
+
+load(file='BA1_df1_2022_sure.Rda')
+load(file='key.Rda')
+load(file='mut286_WT.Rda')
+```
+
+
+## Preprocessing of the generated seqeunce
+The sequences generated from Lineage_generator.py need to be pre-processed.
+```{r}
+BA1_df1<- read.csv("BA.1_all_years_set.csv")
+BA1_df1<-BA1_df1 %>%
+  mutlist_escapeindex()%>%
+  add_key_mut()%>%
+BA1_df1_2022<-subset(BA1_df1,year == 2022)
+BA1_df1_2022_sure<-remove_unsure(BA1_df1_2022)
+```
+
+## Escape score
+the escape score is calculated with a function calculate_strength(), which will return a dataframe of all the mutations and their escape scores, ranked by the position index.
+```{r}
+combined_strength_BA1<-calculate_strength(BA1_df1_2022_sure)
+#rank by escape score
+combined_strength_BA1<-combined_strength_BA1[order(combined_strength_BA1$strength_adj,decreasing = T),]
+combined_strength_BA1$rank<-1:nrow(combined_strength_BA1)
+combined_strength_BA1$type<-ifelse(combined_strength_BA1$mut %in% key, "Observed mutation", ifelse(combined_strength_BA1$posi %in% key_posi, 'Observed mutation position', 'New mutation'))
+head(combined_strength_BA1)
+plot_strength(mut_strength = combined_strength_BA1, threshold = 0.3e-5, color_column = 'type',top = 10)
+```
+
+Annotate the mutations by highlighting specific mutations and positional mutations in BA.2.86
+```{r}
+#RBD aa sequence of BA.2.86
+RBD_286<-mutation_to_sequence(mutations = as.vector(mut286_WT), backbone ='NITNLCPFGEVFNATRFASVYAWNRKRISNCVADYSVLYNSASFSTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGKIADYNYKLPDDFTGCVIAWNSNNLDSKVGGNYNYLYRLFRKSNLKPFERDISTEIYQAGSTPCNGVEGFNCYFPLQSYGFQPTNGVGYQPYRVVVLSFELLHAPATVCGPKKST')
+#as the library is designed based on BA.1. Let's get BA.1 based mutations for BA.2.86
+sequence_to_mutation(sequence = RBD_286,backbone = 'NITNLCPFDEVFNATRFASVYAWNRKRISNCVADYSVLYNLAPFFTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGNIADYNYKLPDDFTGCVIAWNSNKLDSKVSGNYNYLYRLFRKSNLKPFERDISTEIYQAGNKPCNGVAGFNCYFPLRSYSFRPTYGVGHQPYRVVVLSFELLHAPATVCGPKKST')
+#identify positions appeared in previous major variants
+key_posi<-as.numeric(str_extract_all(string=key, pattern = "(\\d)+", simplify = T))
+#include mutated position in BA1 in key_posi.
+RBD_BA1<-"NITNLCPFDEVFNATRFASVYAWNRKRISNCVADYSVLYNLAPFFTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGNIADYNYKLPDDFTGCVIAWNSNKLDSKVSGNYNYLYRLFRKSNLKPFERDISTEIYQAGNKPCNGVAGFNCYFPLRSYSFRPTYGVGHQPYRVVVLSFELLHAPATVCGPKKST"
+RBD_WT<-"NITNLCPFGEVFNATRFASVYAWNRKRISNCVADYSVLYNSASFSTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGKIADYNYKLPDDFTGCVIAWNSNNLDSKVGGNYNYLYRLFRKSNLKPFERDISTEIYQAGSTPCNGVEGFNCYFPLQSYGFQPTNGVGYQPYRVVVLSFELLHAPATVCGPKKST"
+BA1_posi<-as.numeric(str_extract_all(string=sequence_to_mutation(sequence = RBD_BA1,backbone = RBD_WT), pattern = "(\\d)+", simplify = T))
+key_posi<-union(BA1_posi,key_posi)
+#identify what mutation is new in BA.2.86, that didn't appear in other major variants.
+mut286_BA1_new<-mut286_BA1[!(mut286_BA1 %in% key)]
+#identify positions that are new in BA.2.86, that didn't appear in other major variants.
+posi286_BA1_new<-as.numeric(str_extract_all(mut286_BA1_new, pattern = "(\\d)+", simplify = T))
+#in column $type , annotate the mutations by highlighting specific mutations and positional mutations in BA.2.86 
+combined_strength_BA1$type286<- ifelse(combined_strength_BA1$mut %in% mut286_BA1_new, "Specific mutation in BA.2.86", ifelse(combined_strength_BA1$posi %in% posi286_BA1_new ,'Mutated site in BA.2.86','Other mutation'))
+head(combined_strength_BA1)
+```
+
+Plot escape score
+```{r figure 4f preview}
+#the function plot_strength_86() is used to highlight the BA.2.86 related mutation and positions.
+p<-plot_strength_86(mut_strength = combined_strength_BA1 ,threshold = 0, color_column = 'type286' )
+p
+```
+
+Save the plot figure 4f.
+```{r figure 4f print}
+ ggsave(plot = p8, filename = 'keymutation286_posi_fixedtext.pdf', 
+       width =12,
+       height = 3)
+```
+
+## Lineage plot figure. 4a
+Here we try to plot a sample lineage to show the escape profile to antibodies.
+Due to the limited amount of nodes can be clearly shown in each lineage plot, we can only select a subset of mutations to be included in the lineage plot.
+```{r}
+#use function get_top_mut() to get the list of sequence by ranking mutations by their escape score (from dataframe combined_strength_BA1)
+#type = 1 means the mutations to be included in the lineage are all the mutations.
+#type = 2 means the mutations to be included in the lineage are mutations never appeared in orthogonal/major variants (all VOCs and major Omicron variants).
+#type = 3 means the mutations to be included in the lineage are mutations that only at positions that never appeared in VOC/major variants mutations.
+#the function is taking top n mutations ranked on the top by their calculated escape score
+
+alternative_df_selected<-get_top_mut(BA1_df1, type=2, n=10)
+```
+
+Choose a way to down size the lineage: now select a most frequently used mutation.
+```{r}
+#Starting from sequences from type 2 subseted mutation.
+#1. simply select less mutations from the key_strength ranking 
+alternative_df_keyposi_short <- get_top_mut(BA1_df1_2022_sure, combined_strength_BA1, type=2, n=6) # 8, 51. 5,10
+#2. subset from alternative_df_selected, keep only the combination of 2
+alternative_df_selected_combi2 <- subset(alternative_df_selected,dis_BA.1 ==2)
+#3. subset from alternative_df_selected, keep only sequences with mutation "K356T". it is 2.86 mutation.
+alternative_df_selected_K356T <- alternative_df_selected[sapply(alternative_df_selected$mut_BA.1, function(item) {
+  'K356T' %in% item 
+  }),]
+#4. subset from alternative_df_selected, keep only sequences with mutation "K356T" and without T523P
+alternative_df_selected_K356T_woT523P<-alternative_df_selected[sapply(alternative_df_selected$mut_BA.1, function(item) {
+  'K356T' %in% item & !('T523P'  %in% item)  }),]
+#5. subset from alternative_df_selected, keep only sequences with mutation "F486A"
+alternative_df_selected_F486A<-alternative_df_selected[sapply(alternative_df_selected$mut_BA.1, function(item) {
+  'F486A' %in% item  }),]
+#6.486A is driving every mab escape. what if without it? subset from alternative_df_selected, keep only sequences without mutation "F486A"
+alternative_df_selected_woF486A<-alternative_df_selected[sapply(alternative_df_selected$mut_BA.1, function(item) {
+   !('F486A' %in% item)  }),]
+alternative_df_selected_D339R<-alternative_df_selected[sapply(alternative_df_selected$mut_BA.1, function(item) {
+  'D339R' %in% item
+})
+,]
+```
+
+Plot the preferred lineage with this code. Name df the selected sequence dataframe from the last code block.
+```{r}
+df<-alternative_df_selected_D339R
+#df<-alternative_df_selected_K356T_woT523P
+#df<-alternative_df_keyposi_short
+#df<-alternative_df_selected_F486A
+#df<-alternative_df_selected_woF486A
+
+df<-mutate(df, across(c("ZCB11", "ADG20", "BRII198","A23581","S2X259","S2H97"), as.factor))
+df$key_mut<-sapply(df$key_mut,FUN = paste, collapse = ",")
+df$mut_BA.1<-sapply(df$mut_BA.1,FUN = paste, collapse = ",")
+#df<-df[rev(order(df$escape_index)),]
+#seq<-c(df$seq,'NITNLCPFDEVFNATRFASVYAWNRKRISNCVADYSVLYNLAPFFTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGNIADYNYKLPDDFTGCVIAWNSNKLDSKVSGNYNYLYRLFRKSNLKPFERDISTEIYQAGNKPCNGVAGFNCYFPLRSYSFRPTYGVGHQPYRVVVLSFELLHAPATVCGPKKST')
+output_tree <- tidytree::as_tibble(ape::nj(stringdist::stringdistmatrix(df$seq)))
+annotation_df<-tibble(label = as.character(c(1:nrow(df))),
+                     ZCB11 = df$ZCB11, 
+                     ADG20 = df$ADG20, 
+                      BRII198 = df$BRII198,
+                     A23581 = df$A23581,
+                     S2X259 = df$S2X259,
+                   S2H97 = df$S2H97,
+                   Distance= df$dis_BA.1,
+                   escape_index = df$escape_index,
+                   Key_mutations = df$count,
+                   key_mut=df$key_mut,
+                   mutation=df$mut_BA.1
+                     )
+    colnames(annotation_df)[2:7] <- c("ZCB11", "ADG20", "Brii-198","A23-58.1","S2X259","S2H97")
+    output_tree <- ape::as.phylo(output_tree)
+    output_tree<-full_join(output_tree, annotation_df, by ='label')
+    
+    new_tree <- ggtree::ggtree(output_tree, ladderize = T, aes(color=Distance), branch.length = "none", size = 1)+ 
+    scale_color_continuous(low='limegreen', high='darkorange3', breaks = seq(1, 6, by = 1))+ geom_tiplab(aes(label = mutation), size=6)
+    
+
+    new_tree <- ggtree::gheatmap(new_tree, annotation_df[c("ZCB11", "ADG20", "Brii-198","A23-58.1","S2X259","S2H97")],
+                 offset = 60, width = 3.8, font.size = 6, color = 'white',
+                 colnames_angle = 90, colnames_offset_y = -1.5, colnames_offset_x = -0.5) +
+                  scale_fill_manual(name = 'Binding', values = c("0" = "#B3593D", "1" = "#41758A"))+
+                  #ggtitle(paste("Variants with BA.1 sublineage key mutations", year)) + 
+                  ggtree::vexpand(.1, -1)+
+                  theme(legend.text = element_text(size = 18), legend.title = element_text(size = 18))
+    
+    new_tree
+```
+Save the plot as pdf.
+```{r}
+    #save_plot <- paste("Variants with BA.1 sublineage alternative mutations with K356TwoT523P", year, 'large' ,'.pdf')
+  save_plot <- paste0("Variants with BA.1 sublineage alternative mutations D339R ", year,'.pdf')
+    ggsave(save_plot, new_tree, width = 12, height = 14)
+```
+
