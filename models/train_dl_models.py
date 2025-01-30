@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, matthews_corrcoef, f1_score, precision_score, recall_score, auc, \
     roc_auc_score
 import keras.backend as K
-from helpers import encode_onehot_padded
+from utils.helpers import encode_onehot_padded
 import random
 
 

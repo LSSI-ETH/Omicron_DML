@@ -21,8 +21,8 @@ import scipy as sc
 import seaborn as sns
 import warnings
 
-from base_models import CNN_model_1D, MLP
-from helpers import encode_onehot_padded
+from utils.dl_model_utils import CNN_model_1D, MLP
+from utils.helpers import encode_onehot_padded
 
 
 def create_parser():
@@ -356,7 +356,7 @@ def load_ace2_models(args, MODEL_DIR, SCORE_DIR):
         # flatten encodings
         init_x = init_x.reshape(init_x.shape[0], -1)
 
-    # take metrics from top models selected from Top_models.py
+    # take metrics from top models selected from score_top_models.py
     top_models_df = pd.read_csv(f"{SCORE_DIR}/ACE2_{args.base_model}_seed{args.test_seed}_depth{args.model_depth}_{args.rank_metric}_top_model_metrics.csv",
                                 index_col=0)
     top_models_df.reset_index(inplace=True)
