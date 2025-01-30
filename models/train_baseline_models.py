@@ -28,7 +28,7 @@ target = "2_7"
 lib = "Lib1"
 
 # Specify the path to the folder containing your training data
-path_to_dataset = "data/"
+path_to_dataset = "../data/"
 
 # Specify the machine learning model to be trained, available options:
 # XGBoost, SVM, RandomForest, Logistic, NaiveBayes, KNN

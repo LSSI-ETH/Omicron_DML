@@ -26,8 +26,8 @@ import time
 import numpy as np
 import pandas as pd
 
-from base_models import CNN_model_1D, MLP
-from helpers import encode_onehot_padded
+from utils.dl_model_utils import CNN_model_1D, MLP
+from utils.helpers import encode_onehot_padded
 
 timestr = time.strftime("%Y%m%d-%H")
 
