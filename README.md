@@ -17,4 +17,4 @@ utils: contains utility functions used throughout
 
 =====================================================
 
-./data only contains a small subset of the data from our sorted libraries. Please feel free to reach out to the authors to request the full datasets.
+NOTE: ./data only contains a small subset of the data from our sorted libraries. Please feel free to reach out to the authors to request the full datasets.
